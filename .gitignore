@@ -3,3 +3,4 @@ config.json
 node_modules
 .mp4
 .webm
+ffmpegTest.js

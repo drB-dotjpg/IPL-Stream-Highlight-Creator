@@ -8,6 +8,7 @@ const client = new Client({
     intents: [Intents.FLAGS.GUILDS]
 });
 
+//get all the command files and load them
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -21,6 +22,7 @@ client.once('ready', () => {
     console.log("Ready");
 });
 
+//runs whenever there is an interaction (eg. a command is run)
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isCommand()) return;
 
