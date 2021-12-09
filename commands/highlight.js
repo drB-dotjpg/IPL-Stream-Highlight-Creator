@@ -20,7 +20,7 @@ const data = new SlashCommandBuilder()
     )
     .addStringOption(option =>
         option.setName('link')
-            .setDescription("Attach a Twitch clip link.")
+            .setDescription("Attach an IPL Twitch clip link.")
             .setRequired(true)
     );
 
@@ -46,9 +46,7 @@ function ffmpegOverlayer(file, tourney) {
                       }
                     ])
                     .withOptions([
-                      "-r 30", //set fps to 30
-                      "-b:a 96k", //compress the audio via bitrate
-                      "-crf 26", //compress the video
+                      "-b:v 1.8M", //adjust bitrate
                       "-c:v h264_qsv" //encode the video
                     ])
                 .on('start', function(){
@@ -88,39 +86,45 @@ module.exports = {
         //tell both discord and the end user this might take a while
         await interaction.deferReply();
 
-        //launch a headless browser and load the twitch page
         try{
-            console.log("launching headless browser.");
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-            await page.goto(link, { waitUntil: 'networkidle0' });
-            console.log("page loaded, finding and getting video source.");
+            //launch a headless browser and load the twitch page
+            var source;
+            try{
+                console.log("launching headless browser.");
+                const browser = await puppeteer.launch();
+                const page = await browser.newPage();
+                await page.goto(link, { waitUntil: 'networkidle0' });
+                console.log("page loaded, finding and getting video source.");
 
-            //get the source link of the video
-            const source = await page.evaluate(() => {
-                return document.querySelector("video").currentSrc;
-            });
-            console.log("got video source " + source);
-        } catch (err) {
-            await interaction.editReply("The was an error getting this clip from twitch!\n`" + err + "`");
-            return;
-        }
+                //get the source link of the video
+                source = await page.evaluate(() => {
+                    return document.querySelector("video").currentSrc;
+                });
+                console.log("got video source " + source);
+            } catch (err) {
+                await interaction.editReply("There was an error getting this clip from twitch!\n`" + err + "`");
+                return;
+            }
 
-        //we gotta change the link a bit before we can process it
-        var vidIdSplit = source.split('?')[0].split('/');
-        var vidId = vidIdSplit.at(-1);
-        const clipLink = "https://clips-media-assets2.twitch.tv/" + vidId;
-        console.log("The generated clip link is " + clipLink);
-        
-        //ffmpeg time
-        await ffmpegOverlayer(clipLink, tourney)
-            .then(() => {
-                console.log("Uploading...");
-                const file = new MessageAttachment(fileNameOut);
-                interaction.editReply({files:[file]});
-            }).catch((err) => {
-                console.log("ffmpegOverlayer was rejected: " + err);
-                interaction.editReply("There was an error processing this clip!\n`" + err + "`");
-            });
+            //we gotta change the link a bit before we can process it
+            var vidIdSplit = source.split('?')[0].split('/');
+            var vidId = vidIdSplit.at(-1);
+            const clipLink = "https://clips-media-assets2.twitch.tv/" + vidId;
+            console.log("The generated clip link is " + clipLink);
+            
+            //ffmpeg time
+            await ffmpegOverlayer(clipLink, tourney)
+                .then(() => {
+                    console.log("Uploading...");
+                    const file = new MessageAttachment(fileNameOut);
+                    interaction.editReply({files:[file]});
+                }).catch((err) => {
+                    console.log("ffmpegOverlayer was rejected: " + err);
+                    interaction.editReply("There was an error processing this clip!\n`" + err + "`");
+                });
+            }
+        catch (err) {
+            await interaction.editReply("There was a error carrying out this command!\n`" + err + "`");
+        }   
     },
 };
