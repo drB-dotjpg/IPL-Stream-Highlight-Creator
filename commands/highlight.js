@@ -15,8 +15,6 @@ const data = new SlashCommandBuilder()
             .setRequired(true)
             .addChoice("Low Ink", "low_ink")
             .addChoice("Swim or Sink", "swim_or_sink")
-            .addChoice("King of the Castle", "king_of_the_castle")
-            .addChoice("Reef Rushdown", "reef_rushdown")
     )
     .addStringOption(option =>
         option.setName('link')
@@ -34,8 +32,10 @@ function ffmpegOverlayer(file, tourney) {
             } else {
                 ffmpeg().withOptions([
                     "-i " + file, //take the twitch clip as an input
+                    "-r 60",
                     "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
                     "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
+                    "-r 60",
                     ])
                     .complexFilter([
                       {
