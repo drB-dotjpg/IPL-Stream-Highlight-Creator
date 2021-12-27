@@ -2,8 +2,9 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const puppeteer = require('puppeteer');
 var ffmpeg = require("fluent-ffmpeg");
 const { MessageAttachment } = require('discord.js');
+const fs = require('fs');
 
-const fileNameOut = "IPL_Highlight.mp4";
+const fileNameOut = "_highlight.mp4";
 
 //create the data found in the slash command
 const data = new SlashCommandBuilder()
@@ -15,6 +16,8 @@ const data = new SlashCommandBuilder()
             .setRequired(true)
             .addChoice("Low Ink", "low_ink")
             .addChoice("Swim or Sink", "swim_or_sink")
+            .addChoice("King of the Castle", "king_of_the_castle")
+            .addChoice("Splatoon Advanced Circuit", "sac")
     )
     .addStringOption(option =>
         option.setName('link')
@@ -25,10 +28,12 @@ const data = new SlashCommandBuilder()
 function ffmpegOverlayer(file, tourney) {
     return new Promise((resolve, reject) => {
 
+        var fileName = tourney + Date.now() + fileNameOut;
+
         ffmpeg.ffprobe(file, function(error, metadata) {
             const clipDuration = metadata.format.duration;
             if (clipDuration > 35){
-                reject("Clip is too long (clips should be under 35 seconds long)");
+                reject("Clip is too long: clips should be under 35 seconds long!");
             } else {
                 ffmpeg().withOptions([
                     "-i " + file, //take the twitch clip as an input
@@ -54,13 +59,18 @@ function ffmpegOverlayer(file, tourney) {
                 })
                 .on('error', function(err) {
                     console.log('An ffmpeg error occurred: ' + err.message);
-                    return reject(new Error(err));
+                    fs.unlinkSync(fileName, (err) => { 
+                        if (err) { 
+                          console.log(err); 
+                        }
+                    });
+                    return reject(new Error(err), fileName);
                 })
                 .on('end', function(){
                     console.log("ffmpeg is done!");
-                    resolve();
+                    resolve(fileName);
                 })
-                .save(fileNameOut);
+                .save(fileName);
             }
         });
     })
@@ -114,15 +124,20 @@ module.exports = {
             
             //ffmpeg time
             await ffmpegOverlayer(clipLink, tourney)
-                .then(() => {
+                .then(async function(fileName){
                     console.log("Uploading...");
-                    const file = new MessageAttachment(fileNameOut);
-                    interaction.editReply({files:[file]});
-                }).catch((err) => {
+                    const file = new MessageAttachment(fileName);
+                    await interaction.editReply({files:[file]});
+                    fs.unlink(fileName, (err) => { 
+                        if (err) { 
+                          console.log(err); 
+                        }
+                    });
+                }).catch(function(err) {
                     console.log("ffmpegOverlayer was rejected: " + err);
                     interaction.editReply("There was an error processing this clip!\n`" + err + "`");
                 });
-            }
+        }
         catch (err) {
             await interaction.editReply("There was a error carrying out this command!\n`" + err + "`");
         }   
