@@ -113,6 +113,8 @@ module.exports = {
                     return document.querySelector("video").currentSrc;
                 });
                 console.log("got video source " + source);
+                
+                await browser.close();
             } catch (err) {
                 await interaction.editReply("There was an error getting this clip from twitch!\n`" + err + "`");
                 return;
