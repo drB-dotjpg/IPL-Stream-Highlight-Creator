@@ -3,6 +3,7 @@ const puppeteer = require('puppeteer');
 var ffmpeg = require("fluent-ffmpeg");
 const { MessageAttachment } = require('discord.js');
 const fs = require('fs');
+const { encoder } = require("../config.json");
 
 const fileNameOut = "_highlight.mp4";
 
@@ -54,7 +55,7 @@ function ffmpegOverlayer(file, tourney) {
                     ])
                     .withOptions([
                       "-b:v 1.8M", //adjust bitrate
-                      "-c:v h264_qsv" //encode the video
+                      "-c:v " + encoder //encode the video
                     ])
                 .on('start', function(){
                     console.log("starting ffmpeg with input " + file + " and overlay " + tourney);
