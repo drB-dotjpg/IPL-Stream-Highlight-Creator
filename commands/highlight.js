@@ -87,7 +87,8 @@ module.exports = {
         const link = interaction.options.getString('link');
         
         //make sure this is a twitch link
-        if (!link.match(/https:\/\/www\.twitch\.tv\/iplsplatoon\/clip\/[A-Za-z0-9]{1,}/)){ //https://www.twitch.tv/iplsplatoon/clip/
+        if (!link.match(/https:\/\/www\.twitch\.tv\/iplsplatoon\/clip\/[A-Za-z0-9]{1,}/) //https://www.twitch.tv/iplsplatoon/clip/
+            && !link.match(/https:\/\/clips\.twitch\.tv/)){ //https://clips.twitch.tv/
             await interaction.reply({
                 content:"**Invalid link.**\nPlease enter an IPL twitch clip link!",
                 ephemeral: true
