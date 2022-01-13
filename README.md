@@ -17,7 +17,8 @@ In the project directory, you will need to create a file called `config.json`. I
 {
     "token": "token goes here",
     "guildId": "server id goes here",
-    "clientId": "bot client id goes here"
+    "clientId": "bot client id goes here",
+    "encoder": "encoder goes here (use h264 or anything that suits your device!)"
 }
 ```
 You will also need to provide your own intro videos to the project. In the project directory, create a folder called `overlays`. Intro videos should be put in this folder, they also must be in `.webm` format. You will need to modify `highlight.js` to actually be able to use your overlay.
