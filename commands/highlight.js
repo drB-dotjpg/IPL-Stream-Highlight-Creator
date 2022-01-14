@@ -2,10 +2,20 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const puppeteer = require('puppeteer');
 var ffmpeg = require("fluent-ffmpeg");
 const { MessageAttachment } = require('discord.js');
-const fs = require('fs');
-const { encoder } = require("../config.json");
+const { encoder, s3_keyId, s3_bucket, s3_endpoint, s3_path, s3_secretAccessKey, s3_url } = require("../config.json");
 
-const fileNameOut = "_highlight.mp4";
+const fileNameOut = "_hl.mp4";
+
+
+//create s3 server data
+var AWS = require('aws-sdk');
+
+AWS.config.credentials = {
+    accessKeyId: s3_keyId,
+    secretAccessKey: s3_secretAccessKey,
+};
+var ep = new AWS.Endpoint(s3_endpoint);
+var s3 = new AWS.S3({endpoint: ep});
 
 //create the data found in the slash command
 const data = new SlashCommandBuilder()
@@ -27,6 +37,8 @@ const data = new SlashCommandBuilder()
             .setDescription("Attach an IPL Twitch clip link.")
             .setRequired(true)
     );
+
+
 
 function ffmpegOverlayer(file, tourney) {
     return new Promise((resolve, reject) => {
@@ -79,6 +91,8 @@ function ffmpegOverlayer(file, tourney) {
     })
 }
 
+
+
 //this runs when the highlight command is executed.
 module.exports = {
     data,
@@ -130,15 +144,40 @@ module.exports = {
             
             //ffmpeg time
             await ffmpegOverlayer(clipLink, tourney)
-                .then(async function(fileName){
+                .then(function(fileName){
                     console.log("Uploading...");
+
+                    /* 
+                    use if you want to upload directly to discord
+
                     const file = new MessageAttachment(fileName);
                     await interaction.editReply({files:[file]});
-                    fs.unlink(fileName, (err) => { 
-                        if (err) { 
-                          console.log(err); 
+                    */
+
+                    //upload to server
+                    var uploadParams = {Bucket: s3_bucket, Key: '', Body: ''};
+                    const fs = require('fs');
+                    var fileStream = fs.createReadStream(fileName);
+                    fileStream.on('error', function(err) {
+                        console.log('File Error', err);
+                    });
+                    uploadParams.Body = fileStream;
+                    var path = require('path');
+                    uploadParams.Key = s3_path + path.basename(fileName);
+
+                    s3.upload(uploadParams, function(err,data){
+                        if (err){
+                            console.log("Upload Error",err);
+                            interaction.editReply("There was an error uploading to the server!");
+                            deleteFile(fileName);
+                        }
+                        if (data){
+                            console.log("Uploaded file", data.Location);
+                            interaction.editReply(s3_url + data.Location);
+                            deleteFile(fileName);
                         }
                     });
+                    
                 }).catch(function(err) {
                     console.log("ffmpegOverlayer was rejected: " + err);
                     interaction.editReply("There was an error processing this clip!\n`" + err + "`");
@@ -149,3 +188,12 @@ module.exports = {
         }   
     },
 };
+
+function deleteFile(fileName){
+    const fs = require('fs');
+    fs.unlink(fileName, (err) => { 
+        if (err) { 
+          console.log(err); 
+        }
+    });
+}
