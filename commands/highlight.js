@@ -46,16 +46,12 @@ function ffmpegOverlayer(file, tourney) {
         var fileName = tourney + Date.now() + fileNameOut;
 
         ffmpeg.ffprobe(file, function(error, metadata) {
-            const clipDuration = metadata.format.duration;
-            if (clipDuration > 35){
-                reject("Clip is too long: clips should be under 35 seconds long!");
-            } else {
                 ffmpeg().withOptions([
                     "-i " + file, //take the twitch clip as an input
                     "-r 60",
                     "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
                     "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
-                    "-r 60",
+                    "-r 60"
                     ])
                     .complexFilter([
                       {
@@ -66,7 +62,7 @@ function ffmpegOverlayer(file, tourney) {
                       }
                     ])
                     .withOptions([
-                      "-b:v 1.8M", //adjust bitrate
+                      "-b:v 6M",
                       "-c:v " + encoder //encode the video
                     ])
                 .on('start', function(){
@@ -74,6 +70,7 @@ function ffmpegOverlayer(file, tourney) {
                 })
                 .on('error', function(err) {
                     console.log('An ffmpeg error occurred: ' + err.message);
+                    const fs = require('fs');
                     fs.unlinkSync(fileName, (err) => { 
                         if (err) { 
                           console.log(err); 
@@ -86,7 +83,6 @@ function ffmpegOverlayer(file, tourney) {
                     resolve(fileName);
                 })
                 .save(fileName);
-            }
         });
     })
 }
@@ -173,7 +169,11 @@ module.exports = {
                         }
                         if (data){
                             console.log("Uploaded file", data.Location);
-                            interaction.editReply(s3_url + data.Location);
+                            var fileLoc = data.Location;
+                            if (!fileLoc.includes("https")){
+                                fileLoc = s3_url + fileLoc;
+                            }
+                            interaction.editReply(fileLoc);
                             deleteFile(fileName);
                         }
                     });
