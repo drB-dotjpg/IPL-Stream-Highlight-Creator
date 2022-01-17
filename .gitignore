@@ -5,3 +5,4 @@ node_modules
 *.webm
 ffmpegTest.js
 browserTest.js
+s3test.js
