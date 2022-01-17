@@ -64,16 +64,15 @@ module.exports = {
                         return document.querySelector("video").currentSrc;
                     });
                     console.log("(URL " + i + ") got video source " + sources[i]);
-                    page.close();
-
+                    
                     //we gotta change the link a bit before we can process it
                     var vidIdSplit = sources[i].split('?')[0].split('/');
                     var vidId = vidIdSplit.at(-1);
                     sources[i] = "https://clips-media-assets2.twitch.tv/" + vidId;
                     console.log("(URL " + i + ") The generated clip link is " + sources[i]);
                 }
-                
-                //await browser.close(); ok this throws an error ig lol 
+
+                await browser.close(); 
 
             } catch (err) {
                 await interaction.editReply("There was an error getting a clip from twitch!\n`" + err + "`");
@@ -87,21 +86,14 @@ module.exports = {
                 output: fileName,
                 videos: sources,
                 transition: {
-                  name: 'fade',
-                  duration: 700
+                  name: 'fadecolor',
+                  duration: 500
                 },
                 args: ['-c:v', encoder, '-profile:v', 'main', '-preset', 'medium', '-crf 18', '-movflags', 'faststart']
               })
             .then(function(){
                 console.log("Uploading...");
-
-                /* 
-                use if you want to upload directly to discord
-
-                const file = new MessageAttachment(fileName);
-                await interaction.editReply({files:[file]});
-                */
-
+                
                 //upload to server
                 var uploadParams = {Bucket: s3_bucket, Key: '', Body: ''};
                 const fs = require('fs');
@@ -131,8 +123,8 @@ module.exports = {
                 });
                 
             }).catch(function(err) {
-                console.log("ffmpegOverlayer was rejected: " + err);
-                interaction.editReply("There was an error processing this clip!\n`" + err + "`");
+                console.log("concat had an error: " + err);
+                interaction.editReply("There was an error processing these clips!\n`" + err + "`");
             });
         }
         catch (err) {
