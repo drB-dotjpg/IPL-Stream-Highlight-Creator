@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const puppeteer = require('puppeteer');
 var ffmpeg = require("fluent-ffmpeg");
+const { MessageAttachment } = require('discord.js');
 const { encoder, s3_keyId, s3_bucket, s3_endpoint, s3_path, s3_secretAccessKey, s3_url } = require("../config.json");
 
 const fileNameOut = "_hl.mp4";
