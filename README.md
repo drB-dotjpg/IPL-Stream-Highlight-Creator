@@ -8,7 +8,6 @@ A Discord bot application that takes a twitch clip link, adds an intro overlay t
 #### NPM packages used:
 - [Discord.js](https://www.npmjs.com/package/discord.js)
 - [Fluent ffmpeg](https://www.npmjs.com/package/fluent-ffmpeg)
-- [ffmpeg-concat](https://www.npmjs.com/package/ffmpeg-concat)
 - [Puppeteer](https://www.npmjs.com/package/puppeteer)
 - [AWS SDK](https://www.npmjs.com/package/aws-sdk)
 
