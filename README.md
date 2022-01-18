@@ -8,9 +8,7 @@ A Discord bot application that takes a twitch clip link, adds an intro overlay t
 #### NPM packages used:
 - [Discord.js](https://www.npmjs.com/package/discord.js)
 - [Fluent ffmpeg](https://www.npmjs.com/package/fluent-ffmpeg)
-- [ffmpeg-concat](https://www.npmjs.com/package/ffmpeg-concat)
 - [Puppeteer](https://www.npmjs.com/package/puppeteer)
-- [AWS SDK](https://www.npmjs.com/package/aws-sdk)
 
 ## Using the bot:
 
@@ -20,14 +18,7 @@ In the project directory, you will need to create a file called `config.json`. I
     "token": "token goes here",
     "guildId": "server id goes here",
     "clientId": "bot client id goes here",
-
-    "encoder": "encoder goes here (use h264 or anything that suits your device!)",
-
-    "s3_keyId":"",
-    "s3_secretAccessKey":"",
-    "s3_endpoint":"",
-    "s3_bucket":"",
-    "s3_path":""
+    "encoder": "encoder goes here (use h264 or anything that suits your device!)"
 }
 ```
 You will also need to provide your own intro videos to the project. In the project directory, create a folder called `overlays`. Intro videos should be put in this folder, they also must be in `.webm` format. You will need to modify `highlight.js` to actually be able to use your overlay.

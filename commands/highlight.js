@@ -1,20 +1,11 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const puppeteer = require('puppeteer');
 var ffmpeg = require("fluent-ffmpeg");
-const { encoder, s3_keyId, s3_bucket, s3_endpoint, s3_path, s3_secretAccessKey, s3_url } = require("../config.json");
+const { MessageAttachment } = require('discord.js');
+const fs = require('fs');
+const { encoder } = require("../config.json");
 
-const fileNameOut = "_hl.mp4";
-
-
-//create s3 server data
-var AWS = require('aws-sdk');
-
-AWS.config.credentials = {
-    accessKeyId: s3_keyId,
-    secretAccessKey: s3_secretAccessKey,
-};
-var ep = new AWS.Endpoint(s3_endpoint);
-var s3 = new AWS.S3({endpoint: ep});
+const fileNameOut = "_highlight.mp4";
 
 //create the data found in the slash command
 const data = new SlashCommandBuilder()
@@ -37,20 +28,22 @@ const data = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-
-
 function ffmpegOverlayer(file, tourney) {
     return new Promise((resolve, reject) => {
 
         var fileName = tourney + Date.now() + fileNameOut;
 
         ffmpeg.ffprobe(file, function(error, metadata) {
+            const clipDuration = metadata.format.duration;
+            if (clipDuration > 35){
+                reject("Clip is too long: clips should be under 35 seconds long!");
+            } else {
                 ffmpeg().withOptions([
                     "-i " + file, //take the twitch clip as an input
                     "-r 60",
                     "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
                     "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
-                    "-r 60"
+                    "-r 60",
                     ])
                     .complexFilter([
                       {
@@ -61,7 +54,7 @@ function ffmpegOverlayer(file, tourney) {
                       }
                     ])
                     .withOptions([
-                      "-b:v 6M",
+                      "-b:v 1.8M", //adjust bitrate
                       "-c:v " + encoder //encode the video
                     ])
                 .on('start', function(){
@@ -69,7 +62,6 @@ function ffmpegOverlayer(file, tourney) {
                 })
                 .on('error', function(err) {
                     console.log('An ffmpeg error occurred: ' + err.message);
-                    const fs = require('fs');
                     fs.unlinkSync(fileName, (err) => { 
                         if (err) { 
                           console.log(err); 
@@ -82,11 +74,10 @@ function ffmpegOverlayer(file, tourney) {
                     resolve(fileName);
                 })
                 .save(fileName);
+            }
         });
     })
 }
-
-
 
 //this runs when the highlight command is executed.
 module.exports = {
@@ -139,44 +130,15 @@ module.exports = {
             
             //ffmpeg time
             await ffmpegOverlayer(clipLink, tourney)
-                .then(function(fileName){
+                .then(async function(fileName){
                     console.log("Uploading...");
-
-                    /* 
-                    use if you want to upload directly to discord
-
                     const file = new MessageAttachment(fileName);
                     await interaction.editReply({files:[file]});
-                    */
-
-                    //upload to server
-                    var uploadParams = {Bucket: s3_bucket, Key: '', Body: ''};
-                    const fs = require('fs');
-                    var fileStream = fs.createReadStream(fileName);
-                    fileStream.on('error', function(err) {
-                        console.log('File Error', err);
-                    });
-                    uploadParams.Body = fileStream;
-                    var path = require('path');
-                    uploadParams.Key = s3_path + path.basename(fileName);
-
-                    s3.upload(uploadParams, function(err,data){
-                        if (err){
-                            console.log("Upload Error",err);
-                            interaction.editReply("There was an error uploading to the server!");
-                            deleteFile(fileName);
-                        }
-                        if (data){
-                            console.log("Uploaded file", data.Location);
-                            var fileLoc = data.Location;
-                            if (!fileLoc.includes("https")){
-                                fileLoc = s3_url + fileLoc;
-                            }
-                            interaction.editReply(fileLoc);
-                            deleteFile(fileName);
+                    fs.unlink(fileName, (err) => { 
+                        if (err) { 
+                          console.log(err); 
                         }
                     });
-                    
                 }).catch(function(err) {
                     console.log("ffmpegOverlayer was rejected: " + err);
                     interaction.editReply("There was an error processing this clip!\n`" + err + "`");
@@ -187,12 +149,3 @@ module.exports = {
         }   
     },
 };
-
-function deleteFile(fileName){
-    const fs = require('fs');
-    fs.unlink(fileName, (err) => { 
-        if (err) { 
-          console.log(err); 
-        }
-    });
-}
