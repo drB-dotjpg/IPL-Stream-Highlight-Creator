@@ -44,46 +44,39 @@ function ffmpegOverlayer(file, tourney) {
 
         var fileName = tourney + Date.now() + fileNameOut;
 
-        ffmpeg.ffprobe(file, function(error, metadata) {
-                ffmpeg().withOptions([
-                    "-i " + file, //take the twitch clip as an input
-                    "-r 60",
-                    "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
-                    "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
-                    "-r 60"
-                    ])
-                    .complexFilter([
-                      {
-                        "filter":"scale", "options":{s:"1280x720"}, "inputs":"[0:v]", "outputs":"[base]" //resize the twitch clip to 720p
-                      },
-                      {
-                        "filter":"overlay", "inputs":"[base][1:v]" //overlay the overlay onto the twitch clip
-                      }
-                    ])
-                    .withOptions([
-                      "-b:v 6M",
-                      "-c:v " + encoder //encode the video
-                    ])
-                .on('start', function(){
-                    console.log("starting ffmpeg with input " + file + " and overlay " + tourney);
-                })
-                .on('error', function(err) {
-                    console.log('An ffmpeg error occurred: ' + err.message);
-                    const fs = require('fs');
-                    fs.unlinkSync(fileName, (err) => { 
-                        if (err) { 
-                          console.log(err); 
-                        }
-                    });
-                    return reject(new Error(err), fileName);
-                })
-                .on('end', function(){
-                    console.log("ffmpeg is done!");
-                    resolve(fileName);
-                })
-                .save(fileName);
-        });
-    })
+            ffmpeg().withOptions([
+                "-i " + file, //take the twitch clip as an input
+                "-r 60",
+                "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
+                "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
+                "-r 60"
+                ])
+                .complexFilter([
+                    {
+                    "filter":"scale", "options":{s:"1280x720"}, "inputs":"[0:v]", "outputs":"[base]" //resize the twitch clip to 720p
+                    },
+                    {
+                    "filter":"overlay", "inputs":"[base][1:v]" //overlay the overlay onto the twitch clip
+                    }
+                ])
+                .withOptions([
+                    "-b:v 6M",
+                    "-c:v " + encoder //encode the video
+                ])
+            .on('start', function(){
+                console.log("starting ffmpeg with input " + file + " and overlay " + tourney);
+            })
+            .on('error', function(err) {
+                console.log('An ffmpeg error occurred: ' + err.message);
+                deleteFile(fileName)
+                return reject(new Error(err), fileName);
+            })
+            .on('end', function(){
+                console.log("ffmpeg is done!");
+                resolve(fileName);
+            })
+            .save(fileName);
+    });
 }
 
 
