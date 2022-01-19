@@ -60,53 +60,32 @@ async function ffmpegConcat(inputs) {
 
         //add resizes
         for (let i = 0; i < durations.length; i++){
-            complexfilters.push({
-                "filter":"scale", "options":{s:"1280x720"}, "inputs":`[${i}]`, "outputs":`[scaler${i}]`
-             });
-             complexfilters.push({
-                "filter":"settb", "options":{tb:"AVTB"}, "inputs":`[scaler${i}]`, "outputs":`[s${i}]`
-             });
+            complexfilters.push(`[${i}:v]scale=1280x720,settb=AVTB[s${i}];`);
         }
 
         //add fades
         if (durations.length == 2){
-            complexfilters.push({
-                "filter":"xfade", "options":{transition:"fadeblack",duration:"1",offset:`${(durations[0]-1)}`}, "inputs":"[s0][s1]"
-            });
-            complexfilters.push({
-                "filter":"acrossfade","options":{d:"1"},"inputs":"[0:a][1:a]"
-            });
+            complexfilters.push(`[0:v][1:v]xfade=transition=fadeblack:duration=1:offset=${durations[0]-1};`);
+            complexfilters.push(`[0:a][1:a]acrossfade=d=1`);
         } else {
             for (let i = 0; i < durations.length-1; i++){
                 durationSum += durations[i]-1;
                 if (i == 0){ //first element
-                    complexfilters.push({
-                        "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[s${i}][s${i+1}]`, "outputs":`[vo${i+1}]`
-                    });
-                    complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[${i}:a][${i+1}:a]`, "outputs":`[ao${i+1}]`
-                    });
+                complexfilters.push(`[s${i}][s${i+1}]xfade=transition=fadeblack:duration=1:offset=${durationSum}[vo${i+1}];`);
+                complexfilters.push(`[${i}:a][${i+1}:a]acrossfade=d=1[ao${i+1}];`);
                 }
                 else if (i == durations.length-2){ //last element
-                    complexfilters.push({
-                        "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[vo${i}][s${i+1}]`
-                    });
-                    complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][${i+1}:a]`
-                    });
+                complexfilters.push(`[vo${i}][s${i+1}]xfade=transition=fadeblack:duration=1:offset=${durationSum};`);
+                complexfilters.push(`[ao${i}][${i+1}:a]acrossfade=d=1`);
                 }
                 else {
-                    complexfilters.push({
-                        "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[vo${i}][s${i+1}]`, "outputs":`[vo${i+1}]`
-                    });
-                    complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][${i+1}:a]`, "outputs":`[ao${i+1}]`
-                    });
+                complexfilters.push(`[vo${i}][s${i+1}]xfade=transition=fadeblack:duration=1:offset=${durationSum}[vo${i+1}];`);
+                complexfilters.push(`[ao${i}][${i+1}:a]acrossfade=d=1[ao${i+1}];`);
                 }
             }
         }
 
-        resolve(complexfilters);
+        resolve(complexfilters.join(''));
 
     });
 }
@@ -124,7 +103,7 @@ function startConcat(links){
                     ffmpegObj.addInput(links[i]);
                 }
                 ffmpegObj
-                    .complexFilter(complexfilters)
+                    .addOption('-filter_complex', complexfilters)
                     .withOptions(["-c:v " + encoder])
                     .save(fileName)
                     .on('start', function(){
