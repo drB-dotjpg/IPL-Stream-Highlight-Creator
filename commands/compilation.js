@@ -51,7 +51,7 @@ async function ffmpegConcat(inputs) {
                 })
                 .catch(function(error){
                     console.log(error);
-                    process.exit();
+                    reject(error);
                 });
         }
 
@@ -177,13 +177,6 @@ module.exports = {
             await startConcat(sources)
                 .then(function(fileName){
                     console.log("Uploading...");
-
-                    /* 
-                    use if you want to upload directly to discord
-
-                    const file = new MessageAttachment(fileName);
-                    await interaction.editReply({files:[file]});
-                    */
 
                     //upload to server
                     var uploadParams = {Bucket: s3_bucket, Key: '', Body: ''};
