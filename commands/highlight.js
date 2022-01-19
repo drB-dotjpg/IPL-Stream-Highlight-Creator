@@ -107,7 +107,7 @@ module.exports = {
             var source;
             try{
                 console.log("launching headless browser.");
-                const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], });
+                const browser = await puppeteer.launch();
                 const page = await browser.newPage();
                 await page.goto(link, { waitUntil: 'networkidle0' });
                 console.log("page loaded, finding and getting video source.");

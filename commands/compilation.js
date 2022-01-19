@@ -104,7 +104,7 @@ function startConcat(links){
                 }
                 ffmpegObj
                     .complexFilter(complexfilters)
-                    .videoCodec(encoder)
+                    .withOptions(["-c:v " + encoder])
                     .save(fileName)
                     .on('start', function(){
                         console.log("starting ffmpeg for compilation");
