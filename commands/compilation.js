@@ -63,9 +63,9 @@ async function ffmpegConcat(inputs) {
             complexfilters.push({
                 "filter":"scale", "options":{s:"1280x720"}, "inputs":`[${i}]`, "outputs":`[scaler${i}]`
              });
-             complexfilters.push({
+            complexfilters.push({
                 "filter":"settb", "options":{tb:"AVTB"}, "inputs":`[scaler${i}]`, "outputs":`[s${i}]`
-             });
+            });
         }
 
         //add fades
@@ -125,7 +125,12 @@ function startConcat(links){
                 }
                 ffmpegObj
                     .complexFilter(complexfilters)
-                    .withOptions(["-c:v " + encoder])
+                    .withOptions([
+                        "-c:v " + encoder,
+                        "-pix_fmt yuv420p",
+                        "-c:a aac",
+                        "-crf 23"
+                    ])
                     .save(fileName)
                     .on('start', function(){
                         console.log("starting ffmpeg for compilation");
