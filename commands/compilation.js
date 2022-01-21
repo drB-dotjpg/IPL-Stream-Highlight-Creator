@@ -58,7 +58,7 @@ async function ffmpegConcat(inputs) {
         let durationSum = 0;
         let complexfilters = new Array();
 
-        //add resizes
+        //add resizes, tb, and audio normalization
         for (let i = 0; i < durations.length; i++){
             complexfilters.push({
                 "filter":"scale", "options":{s:"1280x720"}, "inputs":`[${i}]`, "outputs":`[scaler${i}]`
@@ -66,6 +66,9 @@ async function ffmpegConcat(inputs) {
             complexfilters.push({
                 "filter":"settb", "options":{tb:"AVTB"}, "inputs":`[scaler${i}]`, "outputs":`[s${i}]`
             });
+            complexfilters.push({
+                "filter":"loudnorm", "inputs":`[${i}:a]`, "outputs":`[normalize${i}]`
+            })
         }
 
         //add fades
@@ -74,7 +77,7 @@ async function ffmpegConcat(inputs) {
                 "filter":"xfade", "options":{transition:"fadeblack",duration:"1",offset:`${(durations[0]-1)}`}, "inputs":"[s0][s1]"
             });
             complexfilters.push({
-                "filter":"acrossfade","options":{d:"1"},"inputs":"[0:a][1:a]"
+                "filter":"acrossfade","options":{d:"1"},"inputs":"[normalize0][normalize1]"
             });
         } else {
             for (let i = 0; i < durations.length-1; i++){
@@ -84,7 +87,7 @@ async function ffmpegConcat(inputs) {
                         "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[s${i}][s${i+1}]`, "outputs":`[vo${i+1}]`
                     });
                     complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[${i}:a][${i+1}:a]`, "outputs":`[ao${i+1}]`
+                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[normalize${i}][normalize${i+1}]`, "outputs":`[ao${i+1}]`
                     });
                 }
                 else if (i == durations.length-2){ //last element
@@ -92,7 +95,7 @@ async function ffmpegConcat(inputs) {
                         "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[vo${i}][s${i+1}]`
                     });
                     complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][${i+1}:a]`
+                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][normalize${i+1}]`
                     });
                 }
                 else {
@@ -100,7 +103,7 @@ async function ffmpegConcat(inputs) {
                         "filter":"xfade", "options": {transition:"fadeblack", duration:"1", offset:`${durationSum}`}, "inputs":`[vo${i}][s${i+1}]`, "outputs":`[vo${i+1}]`
                     });
                     complexfilters.push({
-                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][${i+1}:a]`, "outputs":`[ao${i+1}]`
+                        "filter":"acrossfade", "options":{d:"1"}, "inputs":`[ao${i}][normalize${i+1}]`, "outputs":`[ao${i+1}]`
                     });
                 }
             }
@@ -233,7 +236,7 @@ module.exports = {
                     });
                     
                 }).catch(function(err) {
-                    console.log("ffmpegOverlayer was rejected: " + err);
+                    console.log("startConcat was rejected: " + err);
                     interaction.editReply("There was an error processing this clip!\n`" + err + "`");
                 });
         }
