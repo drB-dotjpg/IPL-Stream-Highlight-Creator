@@ -128,7 +128,8 @@ module.exports = {
             //we gotta change the link a bit before we can process it
             var vidIdSplit = source.split('?')[0].split('/');
             var vidId = vidIdSplit.at(-1);
-            const clipLink = "https://clips-media-assets2.twitch.tv/" + vidId;
+            var vidId2 = vidIdSplit.at(-2);
+            const clipLink = `https://clips-media-assets2.twitch.tv/${vidId2}/${vidId}`;
             console.log("The generated clip link is " + clipLink);
             
             //ffmpeg time
