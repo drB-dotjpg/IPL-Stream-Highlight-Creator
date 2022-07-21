@@ -30,7 +30,7 @@ const data = new SlashCommandBuilder()
             .addChoice("King of the Castle", "king_of_the_castle")
             .addChoice("Splatoon Advanced Circuit", "sac")
             .addChoice("Squidboards Splat Series", "sqss")
-            .addChoice("Low Tide City", "ltc")
+            .addChoice("SuperJump 2", "sj2")
     )
     .addStringOption(option =>
         option.setName('link')

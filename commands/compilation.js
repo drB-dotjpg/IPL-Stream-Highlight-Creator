@@ -189,7 +189,8 @@ module.exports = {
                     //we gotta change the link a bit before we can process it
                     var vidIdSplit = sourcelink.split('?')[0].split('/');
                     var vidId = vidIdSplit.at(-1);
-                    sources.push("https://clips-media-assets2.twitch.tv/" + vidId);
+                    var vidId2 = vidIdSplit.at(-2);
+                    sources.push(`https://clips-media-assets2.twitch.tv/${vidId2}/${vidId}`);
                 }
                 
                 await browser.close();
