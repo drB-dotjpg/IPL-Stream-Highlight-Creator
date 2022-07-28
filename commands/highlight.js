@@ -26,11 +26,7 @@ const data = new SlashCommandBuilder()
             .setRequired(true)
             .addChoice("Low Ink", "low_ink")
             .addChoice("Swim or Sink", "swim_or_sink")
-            .addChoice("Reef Rushdown", "reef_rushdown")
-            .addChoice("King of the Castle", "king_of_the_castle")
             .addChoice("Splatoon Advanced Circuit", "sac")
-            .addChoice("Squidboards Splat Series", "sqss")
-            .addChoice("SuperJump 2", "sj2")
     )
     .addStringOption(option =>
         option.setName('link')
@@ -46,22 +42,20 @@ function ffmpegOverlayer(file, tourney) {
         var fileName = tourney + Date.now() + fileNameOut;
 
             ffmpeg().withOptions([
+                "-i ./overlays/" + tourney + ".png", //take the overlay as an input
                 "-i " + file, //take the twitch clip as an input
-                "-r 60",
-                "-c:v libvpx-vp9", //encode it in a way that makes this work (idk how it works)
-                "-i ./overlays/" + tourney + ".webm", //take the overlay as an input
-                "-r 60"
                 ])
                 .complexFilter([
                     {
-                    "filter":"scale", "options":{s:"1280x720"}, "inputs":"[0:v]", "outputs":"[base]" //resize the twitch clip to 720p
+                    "filter":"scale", "options":{s:"1280x720"}, "inputs":"[1:v]", "outputs":"[base]" //resize the twitch clip to 720p
                     },
                     {
-                    "filter":"overlay", "inputs":"[base][1:v]" //overlay the overlay onto the twitch clip
+                    "filter":"overlay", "inputs":"[0:v][base]" //overlay the overlay onto the twitch clip
                     }
                 ])
                 .withOptions([
-                    "-b:v 6M",
+                    "-r 60",
+                    "-crf 31",
                     "-c:v " + encoder //encode the video
                 ])
             .on('start', function(){
@@ -129,7 +123,10 @@ module.exports = {
             var vidIdSplit = source.split('?')[0].split('/');
             var vidId = vidIdSplit.at(-1);
             var vidId2 = vidIdSplit.at(-2);
-            const clipLink = `https://clips-media-assets2.twitch.tv/${vidId2}/${vidId}`;
+            var clipLink = `https://clips-media-assets2.twitch.tv/${vidId2}/${vidId}`;
+            if (vidId2.includes("twitchcdn")){
+                clipLink = "https://clips-media-assets2.twitch.tv/" + vidId;
+            }
             console.log("The generated clip link is " + clipLink);
             
             //ffmpeg time
