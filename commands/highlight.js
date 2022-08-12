@@ -27,6 +27,8 @@ const data = new SlashCommandBuilder()
             .addChoice("Low Ink", "low_ink")
             .addChoice("Swim or Sink", "swim_or_sink")
             .addChoice("Splatoon Advanced Circuit", "sac")
+            .addChoice("Shine 2022", "shine2022")
+            .addChoice("Riptide 2022", "riptide2022")
     )
     .addStringOption(option =>
         option.setName('link')
